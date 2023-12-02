@@ -18,14 +18,41 @@ GLvoid Reshape(int w, int h);
 char* filetobuf(const char* file);
 
 GLvoid Keyboard(unsigned char key, int x, int y);
+void LoadObj(const char* path);
 
 GLchar* vertexSource, *fragmentSource; //--- 소스코드 저장 변수
 GLuint vertexShader, fragmentShader; //--- 세이더 객체
 GLuint shaderProgramID;
 GLuint vao;
 
+std::random_device rd;
+std::mt19937 gen(rd());
+
+int length{};
+int width{};
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
+	LoadObj("cube.obj");
+
+	while (width < 5 || width > 25 || length < 5 || length > 25) {
+		std::cout << "가로 세로 입력 ( 5 ~ 25 ) : ";
+		std::cin >> width >> length;
+
+		if (width < 5 || width > 25 || length < 5 || length > 25) {
+			std::cout << "입력 값이 범위를 벗어납니다." << '\n';
+		}
+	}
+	system("cls");
+	std::cout << "1   : 애니메이션 1" << '\n';
+	std::cout << "2   : 애니메이션 2" << '\n';
+	std::cout << "3   : 애니메이션 3" << '\n';
+	std::cout << "t   : 조명을 켠다/끈다." << '\n';
+	std::cout << "c   : 조명 색을 바꾼다." << '\n';
+	std::cout << "y/Y : 카메라가 바닥의 y축을 기준으로 양/음 방향으로 회전한다." << '\n';
+	std::cout << "+/- : 육면체 이동하는 속도 증가/감소" << '\n';
+	std::cout << "r   : 모든 값 초기화" << '\n';
+	std::cout << "q   : 프로그램 종료" << '\n';
+
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -36,12 +63,65 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glewInit();
 	make_shaderProgram();
 
-
+	
 	//--- 세이더 읽어와서 세이더 프로그램 만들기
-	glutDisplayFunc(drawScene); //--- 출력 콜백 함수
+	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
 	glutMainLoop();
+}
+
+GLuint vbo[3];
+std::uniform_real_distribution<> random_color(0, 1);
+int vertex_count;
+
+void LoadObj(const char* path) {
+	std::vector<int> vertexIndices, uvIndices, normalIndices;
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec2> uvs;
+	std::vector<glm::vec3> normals;
+
+	std::ifstream in(path);
+	if (!in) {
+		std::cerr << path << "파일 못찾음";
+		exit(1);
+	}
+
+	std::string lineHeader;
+	while (in) {
+		std::string lineHeader;
+		in >> lineHeader;
+		if (lineHeader == "v") {
+			glm::vec3 vertex;
+			in >> vertex.x >> vertex.y >> vertex.z;
+			vertices.push_back(vertex);
+		}
+		else if (lineHeader == "vt") {
+			glm::vec2 uv;
+			in >> uv.x >> uv.y;
+			uvs.push_back(uv);
+		}
+		else if (lineHeader == "vn") {
+			glm::vec3 normal;
+			in >> normal.x >> normal.y >> normal.z;
+			normals.push_back(normal);
+		}
+		else if (lineHeader == "f") {
+			char a;
+			int vertexIndex[3], uvIndex[3], normalIndex[3];
+
+			for (int i = 0; i < 3; i++) {
+				in >> vertexIndex[i] >> a >> uvIndex[i] >> a >> normalIndex[i];
+				vertexIndices.push_back(vertexIndex[i] - 1);
+				uvIndices.push_back(uvIndex[i] - 1);
+				normalIndices.push_back(normalIndex[i] - 1);
+			}
+		}
+	}
+
+	for (const auto& vertex : vertices) {
+		std::cout << "x: " << vertex.x << ", y: " << vertex.y << ", z: " << vertex.z << '\n';
+	}
 }
 
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수

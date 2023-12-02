@@ -55,8 +55,8 @@ public:
 			exit(1);
 		}
 		while (in >> lineHeader) {
-			if (lineHeader == "v")	++v_count;
-			else if (lineHeader == "f")	++f_count;
+			if (lineHeader == "v")	++v_count;			// v로 시작하면 정점을 나타내고
+			else if (lineHeader == "f")	++f_count;		// f로 시작하면 면을 나타낸다
 		}
 		in.close();
 		in.open(path);
@@ -77,15 +77,16 @@ public:
 			}
 			else if (lineHeader == "f") {
 				in >> face[f_incount].x >> face[f_incount].y >> face[f_incount].z;
-				vertexdata[f_incount * 3 + 0] = vertex[static_cast<int>(face[f_incount].x - 1)];
+				vertexdata[f_incount * 3 + 0] = vertex[static_cast<int>(face[f_incount].x - 1)]; // Wavefront OBJ 파일에서 정점은 1부터 시작하므로, 배열 인덱스로 사용하기 위해 1을 빼줌
 				vertexdata[f_incount * 3 + 1] = vertex[static_cast<int>(face[f_incount].y - 1)];
 				vertexdata[f_incount * 3 + 2] = vertex[static_cast<int>(face[f_incount].z - 1)];
 				++f_incount;
 			}
 		}
-		for (int i = 0; i < vertex_count / 3; i++)
+		for (int i = 0; i < vertex_count / 3; i++) // 삼각형 면의 법선 백터를 계산하는 부분? 위에서 3곱하고 나눠서.. 삼각형 아니지 않나?
 		{
 			glm::vec3 normal = glm::cross(vertexdata[i * 3 + 1] - vertexdata[i * 3 + 0], vertexdata[i * 3 + 2] - vertexdata[i * 3 + 0]);
+			// corss 함수를 통해 외적 계산해서.. 
 			normaldata[i * 3 + 0] = normal;
 			normaldata[i * 3 + 1] = normal;
 			normaldata[i * 3 + 2] = normal;
