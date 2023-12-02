@@ -80,17 +80,16 @@ void LoadObj(const char* path) {
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> uvs;
 	std::vector<glm::vec3> normals;
+	std::vector<glm::vec3> colordata(vertices.size());
 
 	std::ifstream in(path);
 	if (!in) {
-		std::cerr << path << "파일 못찾음";
+		std::cerr << path << " 파일 못찾음";
 		exit(1);
 	}
 
 	std::string lineHeader;
-	while (in) {
-		std::string lineHeader;
-		in >> lineHeader;
+	while (in >> lineHeader) {
 		if (lineHeader == "v") {
 			glm::vec3 vertex;
 			in >> vertex.x >> vertex.y >> vertex.z;
@@ -119,10 +118,35 @@ void LoadObj(const char* path) {
 		}
 	}
 
-	for (const auto& vertex : vertices) {
-		std::cout << "x: " << vertex.x << ", y: " << vertex.y << ", z: " << vertex.z << '\n';
+
+	colordata[0].x = random_color(gen);
+	colordata[0].y = random_color(gen);
+	colordata[0].z = random_color(gen);
+
+	for (size_t i = 1; i < vertices.size(); ++i) {
+		colordata[i] = colordata[0];
 	}
+
+
+	// 그냥 바인딩까지
+	glGenBuffers(3, vbo);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferData(GL_ARRAY_BUFFER, colordata.size() * sizeof(glm::vec3), colordata.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(2);
 }
+
 
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
