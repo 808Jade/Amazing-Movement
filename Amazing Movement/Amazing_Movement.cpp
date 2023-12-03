@@ -25,12 +25,19 @@ GLuint vertexShader, fragmentShader; //--- ºº¿Ã¥ı ∞¥√º
 GLuint shaderProgramID;
 GLuint vao;
 
+std::random_device rd;
+std::mt19937 gen(rd());
+std::uniform_real_distribution<> random_color(0, 1);
+std::uniform_real_distribution<> height_max(0, 5);
+std::uniform_real_distribution<> height_min(30, 50);
+std::uniform_real_distribution<> speed(0.1, 0.8);
+
 class Cube {
 public:
 	GLuint vbo[3];
 	glm::vec3 pos;
-	float max_height;
-	float min_height;
+	float height_max;
+	float height_min;
 	float speed;
 	float size = 1.f;
 
@@ -108,10 +115,6 @@ public:
 };
 
 Cube cube[25][25];
-
-std::random_device rd;
-std::mt19937 gen(rd());
-std::uniform_real_distribution<> random_color(0, 1);
 
 int length{};
 int width{};
@@ -250,7 +253,15 @@ void InitBuffer() {
 	for (int i = 0; i < 25; ++i) {
 		for (int j = 0; i < 25; ++i) {
 			cube[i][j].LoadObj("cube.obj");
-			cube[i][j]
+		}
+	}
+	for (int i = 0; i < width; ++i) {
+		for (int j = 0; j < length; ++j) {
+			cube[i][j].pos.x;
+			cube[i][j].pos.z;
+			cube[i][j].speed = speed(gen);
+			cube[i][j].height_max = height_max(gen);
+			cube[i][j].height_min = height_min(gen);
 		}
 	}
 }
