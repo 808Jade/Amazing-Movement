@@ -25,8 +25,93 @@ GLuint vertexShader, fragmentShader; //--- 세이더 객체
 GLuint shaderProgramID;
 GLuint vao;
 
+class Cube {
+public:
+	GLuint vbo[3];
+	glm::vec3 pos;
+	float max_height;
+	float min_height;
+	float speed;
+	float size = 1.f;
+
+	void LoadObj(const char* path) {
+		std::vector<int> vertexIndices, uvIndices, normalIndices;
+		std::vector<glm::vec3> vertices;
+		std::vector<glm::vec2> uvs;
+		std::vector<glm::vec3> normals;
+		std::vector<glm::vec3> colordata(vertices.size());
+
+		std::ifstream in(path);
+		if (!in) {
+			std::cerr << path << " 파일 못찾음";
+			exit(1);
+		}
+
+		std::string lineHeader;
+		while (in >> lineHeader) {
+			if (lineHeader == "v") {
+				glm::vec3 vertex;
+				in >> vertex.x >> vertex.y >> vertex.z;
+				vertices.push_back(vertex);
+			}
+			else if (lineHeader == "vt") {
+				glm::vec2 uv;
+				in >> uv.x >> uv.y;
+				uvs.push_back(uv);
+			}
+			else if (lineHeader == "vn") {
+				glm::vec3 normal;
+				in >> normal.x >> normal.y >> normal.z;
+				normals.push_back(normal);
+			}
+			else if (lineHeader == "f") {
+				char a;
+				int vertexIndex[3], uvIndex[3], normalIndex[3];
+
+				for (int i = 0; i < 3; i++) {
+					in >> vertexIndex[i] >> a >> uvIndex[i] >> a >> normalIndex[i];
+					vertexIndices.push_back(vertexIndex[i] - 1);
+					uvIndices.push_back(uvIndex[i] - 1);
+					normalIndices.push_back(normalIndex[i] - 1);
+				}
+			}
+		}
+
+
+		colordata[0].x = random_color(gen);
+		colordata[0].y = random_color(gen);
+		colordata[0].z = random_color(gen);
+
+		for (size_t i = 1; i < vertices.size(); ++i) {
+			colordata[i] = colordata[0];
+		}
+
+
+		// 그냥 바인딩까지
+		glGenBuffers(3, vbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, colordata.size() * sizeof(glm::vec3), colordata.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(1);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+		glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(2);
+	}
+};
+
+Cube cube[25][25];
+
 std::random_device rd;
 std::mt19937 gen(rd());
+std::uniform_real_distribution<> random_color(0, 1);
 
 int length{};
 int width{};
@@ -71,81 +156,9 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMainLoop();
 }
 
-GLuint vbo[3];
-std::uniform_real_distribution<> random_color(0, 1);
-int vertex_count;
-
-void LoadObj(const char* path) {
-	std::vector<int> vertexIndices, uvIndices, normalIndices;
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec2> uvs;
-	std::vector<glm::vec3> normals;
-	std::vector<glm::vec3> colordata(vertices.size());
-
-	std::ifstream in(path);
-	if (!in) {
-		std::cerr << path << " 파일 못찾음";
-		exit(1);
-	}
-
-	std::string lineHeader;
-	while (in >> lineHeader) {
-		if (lineHeader == "v") {
-			glm::vec3 vertex;
-			in >> vertex.x >> vertex.y >> vertex.z;
-			vertices.push_back(vertex);
-		}
-		else if (lineHeader == "vt") {
-			glm::vec2 uv;
-			in >> uv.x >> uv.y;
-			uvs.push_back(uv);
-		}
-		else if (lineHeader == "vn") {
-			glm::vec3 normal;
-			in >> normal.x >> normal.y >> normal.z;
-			normals.push_back(normal);
-		}
-		else if (lineHeader == "f") {
-			char a;
-			int vertexIndex[3], uvIndex[3], normalIndex[3];
-
-			for (int i = 0; i < 3; i++) {
-				in >> vertexIndex[i] >> a >> uvIndex[i] >> a >> normalIndex[i];
-				vertexIndices.push_back(vertexIndex[i] - 1);
-				uvIndices.push_back(uvIndex[i] - 1);
-				normalIndices.push_back(normalIndex[i] - 1);
-			}
-		}
-	}
 
 
-	colordata[0].x = random_color(gen);
-	colordata[0].y = random_color(gen);
-	colordata[0].z = random_color(gen);
 
-	for (size_t i = 1; i < vertices.size(); ++i) {
-		colordata[i] = colordata[0];
-	}
-
-
-	// 그냥 바인딩까지
-	glGenBuffers(3, vbo);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, colordata.size() * sizeof(glm::vec3), colordata.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(2);
-}
 
 
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
@@ -228,6 +241,18 @@ char* filetobuf(const char* file)
 	fclose(fptr); // Close the file
 	buf[length] = 0; // Null terminator
 	return buf; // Return the buffer
+}
+
+void InitBuffer() {
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	for (int i = 0; i < 25; ++i) {
+		for (int j = 0; i < 25; ++i) {
+			cube[i][j].LoadObj("cube.obj");
+			cube[i][j]
+		}
+	}
 }
 
 GLvoid Keyboard(unsigned char key, int x, int y)
